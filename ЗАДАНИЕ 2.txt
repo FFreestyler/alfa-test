@@ -1,0 +1,54 @@
+set dateformat dmy;
+
+DECLARE @table1 table (Id_Client int, Value int);
+insert into @table1
+values
+  (1, 24),
+  (2, 13),
+  (3, 2),
+  (4, 5);
+ 
+DECLARE @table2 table (Id_Client int, Amount int, DocDate datetime, Caption varchar(6))
+insert into @table2
+values
+ (1, 5, '24.10.2005', 'gh'),
+ (1, 9, '19.10.2005', 'wj'),
+ (1, 3, '22.10.2005', 'ek'),
+ (1, 8, '04.10.2005', 'rl'),
+ (1, 6, '18.10.2005', 'tz'),
+ (1, 5, '29.09.2005', 'yx'),
+ (2, 11, '23.10.2005', 'uc'),
+ (2, 6, '21.10.2005', 'iv'),
+ (2, 45, '18.10.2005', 'ob'),
+ (3, 4, '30.10.2005', 'pn'),
+ (3, 2, '28.10.2005', 'am'),
+ (4, 4, '21.10.2005', 'sq'),
+ (4, 6, '23.10.2005', 'dw'),
+ (4, 8, '23.10.2005', 'fe'),
+ (4, 9, '23.10.2005', 'gr');
+
+ 
+select
+ b.Id_Client, b.DocDate,
+ case when a.Value >= c.Amount then b.Amount else d.cr end,
+ b.Caption
+from
+ @table1 a join
+ @table2 b on b.Id_Client = a.Id_Client cross apply
+ (select sum(Amount) from @table2 where Id_Client = b.Id_Client and DocDate >= b.DocDate) c(Amount) cross apply
+ (select a.Value - (c.Amount - b.Amount)) as d(cr)
+where
+ d.cr >= 0
+order by
+ b.Id_Client, b.DocDate desc;
+
+OUTPUT: 
+
+1 2005-10-24 00:00:00.000           5 gh     
+1 2005-10-22 00:00:00.000           3 ek     
+1 2005-10-19 00:00:00.000           9 wj     
+1 2005-10-18 00:00:00.000           6 tz     
+1 2005-10-04 00:00:00.000           1 rl     
+2 2005-10-23 00:00:00.000          11 uc     
+2 2005-10-21 00:00:00.000           2 iv     
+3 2005-10-30 00:00:00.000           2 pn
